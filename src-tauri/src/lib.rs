@@ -1,63 +1,76 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+mod audio_manager;
+mod error;
+
+use audio_manager::{AudioDevice, AudioManager, DeviceType};
+use error::AudioResult;
+use std::sync::Arc;
+use tauri::State;
+use tracing::info;
+
+// Application State
+pub struct AppState {
+    pub audio_manager: Arc<AudioManager>,
 }
 
-use cpal::traits::{DeviceTrait, HostTrait};
-
-#[derive(serde::Serialize, serde::Deserialize)]
-struct AudioDevice {
-    name: String,
+#[tauri::command]
+async fn get_audio_devices(state: State<'_, AppState>) -> AudioResult<Vec<AudioDevice>> {
+    info!("Fetching audio devices...");
+    state.audio_manager.get_devices().await
 }
 
 #[tauri::command]
-fn get_audio_devices() -> (Vec<AudioDevice>, Vec<AudioDevice>) {
-    let host = cpal::default_host();
-    let mut input_devices = Vec::new();
-    let mut output_devices = Vec::new();
+async fn set_default_device(
+    device_id: String,
+    device_type: String,
+    state: State<'_, AppState>,
+) -> AudioResult<()> {
+    info!("Setting default device: {} ({})", device_id, device_type);
 
-    if let Ok(devices) = host.devices() {
-        for device in devices {
-            if let Ok(name) = device.name() {
-                if device.default_input_config().is_ok() {
-                    input_devices.push(AudioDevice { name: name.clone() });
-                }
-                if device.default_output_config().is_ok() {
-                    output_devices.push(AudioDevice { name });
-                }
-            }
+    let device_type = match device_type.as_str() {
+        "Playback" => DeviceType::Playback,
+        "Recording" => DeviceType::Recording,
+        _ => {
+            return Err(error::AudioError::ParseError(
+                "Invalid device type".to_string(),
+            ))
         }
-    }
-    (input_devices, output_devices)
+    };
+
+    state
+        .audio_manager
+        .set_default_device(&device_id, &device_type)
+        .await
 }
 
 #[tauri::command]
-fn set_audio_devices( output: AudioDevice) -> Result<(), String> {
- 
-    #[cfg(target_os = "windows")]
-    {
-        // Safety: this call will attempt to switch the system's default output (sink)
-        // device by its friendly name.
-        default_device_sink::set_output_device(Some(output.name.clone()));
-    }
+async fn check_module_availability(state: State<'_, AppState>) -> AudioResult<bool> {
+    info!("Checking AudioDeviceCmdlets module availability...");
+    state.audio_manager.check_module_availability().await
+}
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        return Err("Changing default output device is only implemented on Windows".to_string());
-    }
-
-    Ok(())
+#[tauri::command]
+async fn install_audio_module(state: State<'_, AppState>) -> AudioResult<()> {
+    info!("Installing AudioDeviceCmdlets module...");
+    state.audio_manager.install_module().await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Initialize tracing
+    tracing_subscriber::fmt::init();
+
+    // Create application state
+    let audio_manager = Arc::new(AudioManager::new().expect("Failed to initialize AudioManager"));
+    let app_state = AppState { audio_manager };
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            greet,
             get_audio_devices,
-            set_audio_devices
+            set_default_device,
+            check_module_availability,
+            install_audio_module
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
