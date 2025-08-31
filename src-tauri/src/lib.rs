@@ -3,6 +3,7 @@ mod error;
 
 use audio_manager::{AudioDevice, AudioManager, DeviceType};
 use error::AudioResult;
+use serde::Deserialize;
 use std::sync::Arc;
 use tauri::State;
 use tracing::info;
@@ -18,12 +19,20 @@ async fn get_audio_devices(state: State<'_, AppState>) -> AudioResult<Vec<AudioD
     state.audio_manager.get_devices().await
 }
 
-#[tauri::command]
-async fn set_default_device(
+#[derive(Deserialize)]
+struct SetDefaultArgs {
+    #[serde(alias = "deviceId")]
     device_id: String,
+    #[serde(alias = "deviceType")]
     device_type: String,
-    state: State<'_, AppState>,
-) -> AudioResult<()> {
+}
+
+#[tauri::command]
+async fn set_default_device(args: SetDefaultArgs, state: State<'_, AppState>) -> AudioResult<()> {
+    let SetDefaultArgs {
+        device_id,
+        device_type,
+    } = args;
     info!("Setting default device: {} ({})", device_id, device_type);
 
     let device_type = match device_type.as_str() {
@@ -40,6 +49,47 @@ async fn set_default_device(
         .audio_manager
         .set_default_device(&device_id, &device_type)
         .await
+}
+
+#[derive(Deserialize)]
+struct AddToSlotArgs {
+    #[serde(alias = "deviceId")]
+    device_id: String,
+    #[serde(alias = "deviceName")]
+    device_name: String,
+    #[serde(alias = "deviceType")]
+    device_type: String,
+    #[serde(alias = "priorityType")]
+    priority_type: String,
+    #[serde(alias = "prioritySlot")]
+    priority_slot: usize,
+}
+
+#[tauri::command]
+async fn add_device_to_priority_slot(
+    args: AddToSlotArgs,
+    state: State<'_, AppState>,
+) -> AudioResult<()> {
+    let AddToSlotArgs {
+        device_id,
+        device_name,
+        device_type,
+        priority_type,
+        priority_slot,
+    } = args;
+    info!(
+        "Adding device {} to priority slot {} for {} devices",
+        device_name, priority_slot, priority_type
+    );
+
+    // For now, just log the action since we're focusing on the UI
+    // In a full implementation, this would save to a priority database or config file
+    info!(
+        "Device '{}' ({}) assigned to priority slot {} in {} chain",
+        device_name, device_id, priority_slot, priority_type
+    );
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -69,6 +119,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_audio_devices,
             set_default_device,
+            add_device_to_priority_slot,
             check_module_availability,
             install_audio_module
         ])

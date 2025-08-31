@@ -1,6 +1,10 @@
 use crate::error::{AudioError, AudioResult};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Write};
+use std::path::PathBuf;
 use std::process::Command;
 use std::time::{Duration, Instant};
 use tracing::{debug, error, info, warn};
@@ -62,6 +66,8 @@ impl Default for AudioManagerState {
 pub struct AudioManager {
     state: std::sync::Arc<tokio::sync::RwLock<AudioManagerState>>,
     session_id: String,
+    /// Optional path to simple JSONL "mini DB" file used to persist device snapshots
+    db_path: Option<PathBuf>,
 }
 
 impl AudioManager {
@@ -70,9 +76,17 @@ impl AudioManager {
         let session_id = Uuid::new_v4().to_string();
         info!("Initializing AudioManager with session ID: {}", session_id);
 
+        // Default DB path: user's local app data directory under sound-changer/devices.jsonl
+        let db_path = dirs::data_local_dir().map(|mut p| {
+            p.push("sound-changer");
+            p.push("devices.jsonl");
+            p
+        });
+
         Ok(Self {
             state: std::sync::Arc::new(tokio::sync::RwLock::new(AudioManagerState::default())),
             session_id,
+            db_path,
         })
     }
 
@@ -109,6 +123,13 @@ impl AudioManager {
                     .insert(device.id.clone(), device.clone());
             }
             state.last_refresh = Some(start_time);
+        }
+
+        // Persist a snapshot to the simple JSONL DB (best-effort)
+        if let Some(db) = &self.db_path {
+            if let Err(e) = Self::save_devices_snapshot(db, &devices, &self.session_id).await {
+                warn!("Failed to persist device snapshot: {}", e);
+            }
         }
 
         let elapsed = start_time.elapsed();
@@ -516,6 +537,73 @@ impl AudioManager {
         }
 
         Ok(audio_devices)
+    }
+
+    /// Save devices snapshot as a JSON line into the db_path. Best-effort, append-only.
+    async fn save_devices_snapshot(
+        db_path: &PathBuf,
+        devices: &Vec<AudioDevice>,
+        session_id: &str,
+    ) -> Result<(), String> {
+        // Ensure parent dir exists
+        if let Some(parent) = db_path.parent() {
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                return Err(format!("Failed to create db dir: {}", e));
+            }
+        }
+
+        let file_res = OpenOptions::new().create(true).append(true).open(db_path);
+
+        let mut file = match file_res {
+            Ok(f) => f,
+            Err(e) => return Err(format!("Failed to open db file: {}", e)),
+        };
+
+        let timestamp: DateTime<Utc> = Utc::now();
+        let snapshot = serde_json::json!({
+            "timestamp": timestamp.to_rfc3339(),
+            "session": session_id,
+            "count": devices.len(),
+            "devices": devices,
+        });
+
+        let line = match serde_json::to_string(&snapshot) {
+            Ok(s) => s,
+            Err(e) => return Err(format!("Failed to serialize snapshot: {}", e)),
+        };
+
+        if let Err(e) = writeln!(file, "{}", line) {
+            return Err(format!("Failed to write snapshot: {}", e));
+        }
+
+        Ok(())
+    }
+
+    /// Load recent snapshots from the JSONL DB (returns up to `limit` latest entries)
+    pub fn load_devices_snapshot(
+        db_path: &PathBuf,
+        limit: usize,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        let f = File::open(db_path).map_err(|e| format!("Failed to open db file: {}", e))?;
+        let reader = BufReader::new(f);
+        let mut entries = Vec::new();
+        for line in reader.lines() {
+            match line {
+                Ok(l) => match serde_json::from_str::<serde_json::Value>(&l) {
+                    Ok(v) => entries.push(v),
+                    Err(_) => continue,
+                },
+                Err(_) => continue,
+            }
+        }
+
+        // return latest `limit` entries
+        if entries.len() > limit {
+            let start = entries.len() - limit;
+            Ok(entries[start..].to_vec())
+        } else {
+            Ok(entries)
+        }
     }
 
     /// Change default device implementation

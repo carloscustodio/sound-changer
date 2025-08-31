@@ -49,6 +49,53 @@
     cursor: grab;
     transition: transform 0.1s ease;
     position: relative;
+    background: rgba(0, 120, 212, 0.1);
+    border: 2px solid rgba(0, 120, 212, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    user-select: none;
+    max-width: 200px;
+}
+
+.draggable-tile:hover {
+    transform: scale(1.02);
+    background: rgba(0, 120, 212, 0.2);
+    border-color: rgba(0, 120, 212, 0.5);
+}
+
+.draggable-tile:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.draggable-tile.default-device {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: rgba(40, 167, 69, 0.5);
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+}
+
+.tile-content {
+    width: 100%;
+    pointer-events: none;
+}
+
+.tile-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    word-wrap: break-word;
+}
+
+.tile-status {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .draggable-tile:hover {
@@ -432,3 +479,280 @@ body.dark .subway-tile {
         border-color: rgba(0, 120, 212, 0.4);
     }
 }
+
+/* Priority Chain Styles */
+.priority-chain-container {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    min-height: 200px;
+}
+
+.priority-flow.horizontal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.priority-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.priority-box {
+    width: 180px;
+    min-height: 120px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.priority-box.empty {
+    background: rgba(255, 255, 255, 0.05);
+    border-style: dashed;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.priority-box.empty:hover {
+    background: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+    transform: scale(1.05);
+}
+
+.priority-box.filled {
+    background: rgba(0, 123, 255, 0.15);
+    border-color: #0078d4;
+    border-style: solid;
+}
+
+.priority-box.filled.current-device {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+}
+
+.priority-box.filled.available {
+    background: rgba(0, 123, 255, 0.2);
+    border-color: #007bff;
+}
+
+.priority-box.filled.unavailable {
+    background: rgba(220, 53, 69, 0.15);
+    border-color: #dc3545;
+    opacity: 0.7;
+}
+
+.priority-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.priority-number {
+    background: #0078d4;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.priority-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    font-weight: 500;
+}
+
+.device-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.device-name {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.device-status {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.7rem;
+    text-align: center;
+}
+
+.empty-slot-content {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.drop-hint {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.drop-icon {
+    font-size: 1.5rem;
+}
+
+.priority-arrow {
+    color: #0078d4;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+}
+
+.priority-direction-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    font-weight: 600;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    padding: 0 0.5rem;
+}
+
+.priority-instructions {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+
+.priority-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.priority-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+}
+
+.priority-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.priority-btn.remove {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: #dc3545;
+}
+
+.priority-btn.remove:hover {
+    background: rgba(220, 53, 69, 0.4);
+}
+
+/* Auto-switch controls */
+.priority-controls {
+    margin-bottom: 1rem;
+}
+
+.auto-switch-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+}
+
+.auto-switch-button {
+    background: rgba(0, 123, 255, 0.2);
+    border: 1px solid #007bff;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.auto-switch-button:hover {
+    background: rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .priority-flow.horizontal {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .priority-arrow {
+        transform: rotate(90deg);
+    }
+    
+    .priority-direction-label {
+        writing-mode: horizontal-tb;
+        min-height: auto;
+        min-width: 120px;
+    }
+    
+    .priority-box {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* Toasts */
+.toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+}
+.toast {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity .2s ease, transform .2s ease;
+    background: #2b2b2b;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+    font-size: 14px;
+}
+.toast.visible { opacity: 1; transform: translateY(0); }
+.toast.success { background: #1f7a1f; }
+.toast.error { background: #9b1c1c; }
+.toast.info { background: #2b2b2b; }
