@@ -425,33 +425,27 @@ pub fn app() -> Html {
                 <div class="devices-container">
                     <div class="device-section">
                         <h2 class="section-title">{format!("Available Playback Devices ({})", playback_devices.len())}</h2>
-                        <div class="device-list">
+                        <div class="tiles-grid">
                             {
                                 playback_devices.iter().map(|d| {
-                                    let mut tile_class = "device-row draggable-tile".to_string();
-                                    if d.is_default {
-                                        tile_class.push_str(" default-device");
-                                    }
-                                    
+                                    let wrapper_class = if d.is_default { "default-device" } else { "" };
                                     let device_id = d.id.clone();
                                     let device_name = d.name.clone();
                                     let device_type = d.device_type.clone();
-                                    
+
                                     html! {
-                                        <div 
-                                            class={tile_class} 
-                                            key={d.id.clone()}
-                                            // InteractJS handles dragging; no native draggable
-                                            data-device-id={device_id.clone()}
-                                            data-device-name={device_name.clone()}
-                                            data-device-type={device_type.clone()}
-                                            style="cursor: grab; user-select: none;"
-                                            onmousedown={Callback::from(|_| {})}
-                                        >
-                                            <div class="tile-content" style="pointer-events: none;">
-                                                <div class="tile-title">{d.name.clone()}</div>
-                                                <div class="tile-status">
-                                                    {if d.is_default { " (Default)" } else { "" }}
+                                        <div class={wrapper_class} key={d.id.clone()}>
+                                            <div
+                                                class="subway-tile"
+                                                data-device-id={device_id}
+                                                data-device-name={device_name}
+                                                data-device-type={device_type}
+                                                style="cursor: grab; user-select: none;"
+                                            >
+                                                <div class="subway-tile-title">{"Playback"}</div>
+                                                <div class="subway-tile-body">
+                                                    <div class="tile-title">{d.name.clone()}</div>
+                                                    <div class="tile-status">{ if d.is_default { "Default" } else { "Available" } }</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -484,33 +478,27 @@ pub fn app() -> Html {
 
                     <div class="device-section">
                         <h2 class="section-title">{format!("Available Recording Devices ({})", recording_devices.len())}</h2>
-                        <div class="device-list">
+                        <div class="tiles-grid">
                             {
                                 recording_devices.iter().map(|d| {
-                                    let mut tile_class = "device-row draggable-tile".to_string();
-                                    if d.is_default {
-                                        tile_class.push_str(" default-device");
-                                    }
-                                    
+                                    let wrapper_class = if d.is_default { "default-device" } else { "" };
                                     let device_id = d.id.clone();
                                     let device_name = d.name.clone();
                                     let device_type = d.device_type.clone();
-                                    
+
                                     html! {
-                                        <div 
-                                            class={tile_class} 
-                                            key={d.id.clone()}
-                                            // InteractJS handles dragging; no native draggable
-                                            data-device-id={device_id.clone()}
-                                            data-device-name={device_name.clone()}
-                                            data-device-type={device_type.clone()}
-                                            style="cursor: grab; user-select: none;"
-                                            onmousedown={Callback::from(|_| {})}
-                                        >
-                                            <div class="tile-content" style="pointer-events: none;">
-                                                <div class="tile-title">{d.name.clone()}</div>
-                                                <div class="tile-status">
-                                                    {if d.is_default { " (Default)" } else { "" }}
+                                        <div class={wrapper_class} key={d.id.clone()}>
+                                            <div
+                                                class="subway-tile"
+                                                data-device-id={device_id}
+                                                data-device-name={device_name}
+                                                data-device-type={device_type}
+                                                style="cursor: grab; user-select: none;"
+                                            >
+                                                <div class="subway-tile-title">{"Recording"}</div>
+                                                <div class="subway-tile-body">
+                                                    <div class="tile-title">{d.name.clone()}</div>
+                                                    <div class="tile-status">{ if d.is_default { "Default" } else { "Available" } }</div>
                                                 </div>
                                             </div>
                                         </div>

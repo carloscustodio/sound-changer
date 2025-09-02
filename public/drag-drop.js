@@ -60,7 +60,7 @@ function renderFilledSlot(zone, slotNumber, device, isAvailable = true) {
 if (window.interact) {
     // Enable dynamic drop updates for elements added after init
     interact.dynamicDrop(true);
-        interact('.draggable-tile')
+    interact('.subway-tile')
             .draggable({
                 inertia: true,
                 autoScroll: true,
@@ -105,7 +105,7 @@ if (window.interact) {
     // Make each priority box a dropzone
         interact('[data-priority-slot]')
                 .dropzone({
-                    accept: '.draggable-tile',
+                    accept: '.subway-tile',
                     overlap: 0.05,
             ondragenter(event) {
                     const zone = (event.target.matches('[data-priority-slot]') ? event.target : event.target.closest('[data-priority-slot]'));
@@ -223,10 +223,81 @@ console.log('InteractJS drag-drop initialized');
 
 // Improve touch behavior on tiles
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.draggable-tile').forEach(el => {
+    document.querySelectorAll('.metro-tile').forEach(el => {
         el.style.touchAction = 'none';
     });
 });
+
+// Enhanced tilt for Subway tiles (tilt more)
+(() => {
+    const MAX_TILT_DEG = 14; // increase tilt intensity
+    const MAX_SHIFT_PX = 10; // parallax shift
+
+    function bindTilt(el) {
+        if (!el || el.dataset.tiltBound === '1') return;
+        el.dataset.tiltBound = '1';
+        let rect = el.getBoundingClientRect();
+
+        function updateRect() {
+            rect = el.getBoundingClientRect();
+        }
+
+        function onMove(e) {
+            if (el.classList.contains('dragging')) return; // skip while dragging
+            const cx = e.clientX;
+            const cy = e.clientY;
+            const x = (cx - rect.left) / rect.width;   // 0..1
+            const y = (cy - rect.top) / rect.height;  // 0..1
+            if (x < 0 || x > 1 || y < 0 || y > 1) return;
+
+            const tiltY = (x - 0.5) * (MAX_TILT_DEG * 2); // rotateY left/right
+            const tiltX = -(y - 0.5) * (MAX_TILT_DEG * 2); // rotateX up/down
+            const shiftX = (x - 0.5) * (MAX_SHIFT_PX * 2);
+            const shiftY = (y - 0.5) * (MAX_SHIFT_PX * 2);
+
+            el.style.setProperty('--tilt-x', tiltX.toFixed(2) + 'deg');
+            el.style.setProperty('--tilt-y', tiltY.toFixed(2) + 'deg');
+            el.style.setProperty('--tilt-shift-x', shiftX.toFixed(1) + 'px');
+            el.style.setProperty('--tilt-shift-y', shiftY.toFixed(1) + 'px');
+        }
+
+        function onLeave() {
+            el.style.removeProperty('--tilt-x');
+            el.style.removeProperty('--tilt-y');
+            el.style.removeProperty('--tilt-shift-x');
+            el.style.removeProperty('--tilt-shift-y');
+        }
+
+        el.addEventListener('mouseenter', updateRect);
+        el.addEventListener('mousemove', onMove);
+        el.addEventListener('mouseleave', onLeave);
+        window.addEventListener('scroll', updateRect, { passive: true });
+        window.addEventListener('resize', updateRect);
+    }
+
+    function initTilt() {
+        document.querySelectorAll('.subway-tile').forEach(bindTilt);
+    }
+
+    // Initial bind and observe for dynamically added tiles
+    document.addEventListener('DOMContentLoaded', () => {
+        initTilt();
+        // In case Yew mounts after DOMContentLoaded, retry shortly
+        setTimeout(initTilt, 300);
+        setTimeout(initTilt, 1000);
+
+        const obs = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                m.addedNodes && m.addedNodes.forEach(node => {
+                    if (!(node instanceof Element)) return;
+                    if (node.classList.contains('subway-tile')) bindTilt(node);
+                    node.querySelectorAll && node.querySelectorAll('.subway-tile').forEach(bindTilt);
+                });
+            }
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+    });
+})();
 
 // Lightweight toast notifications
 function ensureToastContainer() {

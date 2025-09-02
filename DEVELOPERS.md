@@ -50,6 +50,7 @@ The backend is built with Tauri, providing desktop integration:
 ### Audio Manager (`audio_manager.rs`)
 
 Responsible for:
+
 - Executing PowerShell commands to interact with AudioDeviceCmdlets
 - Enumerating audio devices
 - Setting default devices
@@ -63,10 +64,10 @@ pub async fn get_devices(&self) -> AudioResult<Vec<AudioDevice>> {
     let script = r#"
         Get-AudioDevice -List | ConvertTo-Json -Depth 10
     "#;
-    
+
     // Execute with retry logic
     let output = self.execute_powershell_with_retry(script).await?;
-    
+
     // Parse JSON output
     // ...
 }
@@ -81,13 +82,13 @@ Custom error enum with thiserror integration:
 pub enum AudioError {
     #[error("Audio device not found: {0}")]
     DeviceNotFound(String),
-    
+
     #[error("Permission denied: {0}")]
     PermissionDenied(String),
-    
+
     #[error("Command execution failed: {0}")]
     CommandFailed(String),
-    
+
     #[error("Failed to parse output: {0}")]
     ParseError(String),
 }
@@ -104,7 +105,7 @@ Interface between frontend and backend:
 async fn set_default_device(args: SetDefaultArgs, state: State<'_, AppState>) -> AudioResult<()> {
     // Destructure args struct with serde aliases for camelCase support
     let SetDefaultArgs { device_id, device_type } = args;
-    
+
     // Process command...
     state.audio_manager.set_default_device(&device_id, &device_type).await
 }
@@ -115,19 +116,19 @@ async fn set_default_device(args: SetDefaultArgs, state: State<'_, AppState>) ->
 Uses InteractJS for drag and drop functionality:
 
 ```javascript
-interact('.draggable-tile').draggable({
-    // Configuration...
+interact(".draggable-tile").draggable({
+  // Configuration...
 });
 
-interact('[data-priority-slot]').dropzone({
-    accept: '.draggable-tile',
-    overlap: 0.05,
-    ondrop(event) {
-        // Handle drop event
-        // Update localStorage
-        // Update UI immediately
-        // Call Tauri commands to persist changes
-    }
+interact("[data-priority-slot]").dropzone({
+  accept: ".draggable-tile",
+  overlap: 0.05,
+  ondrop(event) {
+    // Handle drop event
+    // Update localStorage
+    // Update UI immediately
+    // Call Tauri commands to persist changes
+  },
 });
 ```
 
@@ -163,12 +164,15 @@ interact('[data-priority-slot]').dropzone({
 ## Common Issues
 
 1. **Missing AudioDeviceCmdlets Module**
+
    - Solution: Use the in-app installer or run `Install-Module AudioDeviceCmdlets -Force -Scope CurrentUser`
 
 2. **PowerShell Execution Policy**
+
    - Solution: Run `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
 3. **Parameter Naming in Tauri Commands**
+
    - Solution: Ensure JS payload matches Rust struct field names using the `args` wrapper object
 
 4. **Null Reference in localStorage**

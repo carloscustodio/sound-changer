@@ -2,9 +2,12 @@
 
 All notable changes to the Sound Changer project will be documented in this file.
 
-## [0.1.0] - 2025-08-31
+## [1.1.0] - 2025-09-01
+
+## [1.0.0] - 2025-08-31
 
 ### Added
+
 - Initial release with Metro-style UI
 - Playback and Recording device management
 - Priority-based auto-switching system
@@ -16,6 +19,7 @@ All notable changes to the Sound Changer project will be documented in this file
 - Auto-switch toggle functionality
 
 ### Technical Details
+
 - Built with Tauri 2.0 and Yew 0.21
 - PowerShell integration via AudioDeviceCmdlets
 - InteractJS-based drag & drop implementation
